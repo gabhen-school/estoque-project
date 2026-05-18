@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Movimentar Estoque</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background: #f8f8f8; }
+        .card { background: white; padding: 24px 32px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); max-width: 500px; }
+        h2 { margin-bottom: 6px; }
+        .info { background: #e9f5ff; border-left: 4px solid #007bff; padding: 10px 14px; border-radius: 4px; margin-bottom: 20px; font-size: 14px; }
+        label { display: block; margin-bottom: 4px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; box-sizing: border-box; margin-bottom: 14px; border: 1px solid #ccc; border-radius: 4px; }
+        .botoes { display: flex; gap: 10px; }
+        button { padding: 9px 20px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #117a8b; }
+        a.voltar { padding: 9px 20px; background: #6c757d; color: white; border-radius: 4px; text-decoration: none; font-size: 14px; }
+        a.voltar:hover { background: #545b62; }
+        .erro { color: #dc3545; background: #fde8ea; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-bottom: 14px; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h2>🔄 Movimentar Estoque</h2>
+    <div class="info">
+        <strong>Produto:</strong> {{ produto.nome }}<br>
+        <strong>Estoque atual:</strong> {{ produto.quantidade }} unidades
+    </div>
+
+    {% if erro %}
+        <div class="erro">{{ erro }}</div>
+    {% endif %}
+
+    <form method="POST" action="/estoque/movimentar/{{ produto.id }}">
+        {% csrf_token %}
+
+        <label>Tipo de Movimentação</label>
+        <select name="tipo">
+            <option value="ENTRADA">Entrada (aumenta estoque)</option>
+            <option value="SAIDA">Saída (diminui estoque)</option>
+            <option value="AJUSTE">Ajuste (define valor exato)</option>
+        </select>
+
+        <label>Quantidade</label>
+        <input type="number" name="quantidade" min="1" required>
+
+        <label>Observação (opcional)</label>
+        <input type="text" name="observacao" placeholder="Ex: Compra NF 1234, Venda pedido 99...">
+
+        <div class="botoes">
+            <button type="submit">Confirmar</button>
+            <a href="/estoque/listar" class="voltar">Cancelar</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

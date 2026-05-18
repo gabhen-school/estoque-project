@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Estoque</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f0f0f0; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: white; padding: 30px 40px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); width: 300px; }
+        h2 { text-align: center; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 4px; font-weight: bold; }
+        input { width: 100%; padding: 8px; margin-bottom: 16px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; }
+        button:hover { background: #0056b3; }
+        .erro { color: red; text-align: center; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h2>🏪 Estoque</h2>
+    {% if erro %}
+        <p class="erro">{{ erro }}</p>
+    {% endif %}
+    <form method="POST" action="/login">
+        {% csrf_token %}
+        <label>Usuário</label>
+        <input type="text" name="username" required autofocus>
+        <label>Senha</label>
+        <input type="password" name="password" required>
+        <button type="submit">Entrar</button>
+    </form>
+</div>
+</body>
+</html>

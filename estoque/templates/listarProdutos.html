@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Estoque - Produtos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f8f8f8; }
+        h1 { color: #333; }
+        .topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .nav a { margin-right: 12px; text-decoration: none; color: #007bff; }
+        .nav a:hover { text-decoration: underline; }
+        a.btn { padding: 7px 14px; background: #28a745; color: white; border-radius: 4px; text-decoration: none; font-size: 14px; }
+        a.btn:hover { background: #1e7e34; }
+        a.btn-danger { background: #dc3545; }
+        a.btn-danger:hover { background: #bd2130; }
+        a.btn-info { background: #17a2b8; }
+        a.btn-info:hover { background: #117a8b; }
+        a.btn-warning { background: #ffc107; color: #333; }
+        a.btn-warning:hover { background: #d39e00; }
+        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.1); border-radius: 6px; overflow: hidden; }
+        th { background: #343a40; color: white; padding: 10px 14px; text-align: left; }
+        td { padding: 10px 14px; border-bottom: 1px solid #eee; }
+        tr:last-child td { border-bottom: none; }
+        .baixo { color: #dc3545; font-weight: bold; }
+        .logout { color: #dc3545; text-decoration: none; font-size: 14px; }
+        .logout:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="topo">
+    <div>
+        <h1>📦 Estoque - Produtos</h1>
+        <div class="nav">
+            <a href="/estoque/listar">Produtos</a>
+            <a href="/estoque/movimentacoes">Movimentações</a>
+        </div>
+    </div>
+    <div>
+        <span>Olá, <strong>{{ request.user.username }}</strong> &nbsp;|&nbsp;</span>
+        <a href="/logout" class="logout">Sair</a>
+    </div>
+</div>
+
+<p><a href="/estoque/cadastrar" class="btn">+ Novo Produto</a></p>
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Descrição</th>
+            <th>Qtd. em Estoque</th>
+            <th>Qtd. Mínima</th>
+            <th>Preço Unit. (R$)</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for produto in produtos %}
+        <tr>
+            <td>{{ produto.id }}</td>
+            <td>{{ produto.nome }}</td>
+            <td>{{ produto.descricao }}</td>
+            <td class="{% if produto.estoque_baixo %}baixo{% endif %}">
+                {{ produto.quantidade }}
+                {% if produto.estoque_baixo %} ⚠️{% endif %}
+            </td>
+            <td>{{ produto.quantidade_minima }}</td>
+            <td>{{ produto.preco_unitario }}</td>
+            <td>
+                <a href="/estoque/movimentar/{{ produto.id }}" class="btn btn-info">Movimentar</a>
+                <a href="/estoque/editar/{{ produto.id }}" class="btn btn-warning">Editar</a>
+                <a href="/estoque/excluir/{{ produto.id }}" class="btn btn-danger" onclick="return confirm('Excluir produto?')">Excluir</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" style="text-align:center; color:#888;">Nenhum produto cadastrado.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</body>
+</html>
