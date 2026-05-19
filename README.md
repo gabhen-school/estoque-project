@@ -42,7 +42,7 @@ Python 3.10+ instalado.
 ```bash
 cd estoque_project
 
-python -m venv venv
+python3 -m venv venv
 
 # Linux/Mac:
 source venv/bin/activate
@@ -58,20 +58,20 @@ pip install django
 
 ### 4. Rodar as migrations (cria o banco)
 ```bash
-python manage.py migrate
-python manage.py makemigrations
-python manage.py migrate
+python3 manage.py migrate
+python3 manage.py makemigrations
+python3 manage.py migrate
 ```
 
 ### 5. Criar usuário admin (para fazer login)
 ```bash
-python manage.py createsuperuser
+python3 manage.py createsuperuser
 ```
 Vai pedir nome, e-mail (pode deixar em branco) e senha.
 
 ### 6. Rodar o servidor
 ```bash
-python manage.py runserver
+python3 manage.py runserver
 ```
 
 ### 7. Acessar no navegador
