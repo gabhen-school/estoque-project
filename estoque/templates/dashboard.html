@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Estoque - Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #f3f4f6;
+            --surface: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --primary: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 24px; background: var(--bg-primary); color: var(--text-main); line-height: 1.5; }
+        .topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; background: var(--surface); padding: 16px 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); animation: slideDown 0.5s ease; }
+        h1 { font-size: 24px; margin: 0 0 8px 0; color: var(--text-main); }
+        .nav a { margin-right: 16px; text-decoration: none; color: var(--text-muted); font-weight: 600; font-size: 14px; transition: color 0.3s; position: relative; padding-bottom: 4px; }
+        .nav a:hover, .nav a.active { color: var(--primary); }
+        .nav a::after { content: ''; position: absolute; width: 0; height: 2px; bottom: 0; left: 0; background-color: var(--primary); transition: width 0.3s; }
+        .nav a:hover::after { width: 100%; }
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 32px; }
+        .card { background: var(--surface); padding: 24px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); border-top: 4px solid var(--primary); transition: transform 0.3s, box-shadow 0.3s; animation: fadeIn 0.6s ease-out; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .card.alerta { border-top-color: var(--danger); }
+        .card.sucesso { border-top-color: var(--success); }
+        .card h3 { margin: 0 0 12px 0; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .card .valor { font-size: 32px; font-weight: 700; color: var(--text-main); }
+        .conteudo-flex { display: flex; gap: 24px; flex-wrap: wrap; }
+        .coluna { flex: 1; min-width: 320px; background: var(--surface); padding: 24px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); animation: fadeIn 0.8s ease-out; }
+        .coluna h2 { font-size: 18px; margin-top: 0; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+        th { background: #f9fafb; color: var(--text-muted); font-weight: 600; }
+        tr { transition: background-color 0.2s; }
+        tr:hover td { background-color: #f9fafb; }
+        .logout { color: var(--danger); text-decoration: none; font-weight: 600; padding: 6px 12px; border-radius: 6px; transition: background 0.2s; }
+        .logout:hover { background: #fef2f2; }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="topo">
+    <div>
+        <h1>📊 Painel Geral de Estoque</h1>
+        <div class="nav">
+            <a href="/estoque/dashboard" class="active">Dashboard</a>
+            <a href="/estoque/listar">Produtos</a>
+            <a href="/estoque/categorias">Categorias</a>
+            <a href="/estoque/movimentacoes">Movimentações</a>
+        </div>
+    </div>
+    <div>
+        <span>Olá, <strong>{{ request.user.username }}</strong></span> | 
+        <a href="/logout" class="logout">Sair</a>
+    </div>
+</div>
+
+<div class="grid-cards">
+    <div class="card">
+        <h3>Tipos de Produtos</h3>
+        <div class="valor">{{ total_produtos }}</div>
+    </div>
+    <div class="card">
+        <h3>Total de Itens Físicos</h3>
+        <div class="valor">{{ total_itens_fisicos }}</div>
+    </div>
+    <div class="card sucesso">
+        <h3>Valor de Patrimônio</h3>
+        <div class="valor">R$ {{ valor_total_estoque|floatformat:2 }}</div>
+    </div>
+    <div class="card {% if total_alertas > 0 %}alerta{% endif %}">
+        <h3>Produtos Críticos</h3>
+        <div class="valor">{{ total_alertas }} ⚠️</div>
+    </div>
+</div>
+
+<div class="conteudo-flex">
+    <div class="coluna">
+        <h2>⚠️ Alertas Críticos de Reposição</h2>
+        <table>
+            <thead>
+                <tr><th>Produto</th><th>Qtd Atual</th><th>Qtd Mínima</th></tr>
+            </thead>
+            <tbody>
+                {% for prod in produtos_baixo_estoque %}
+                <tr>
+                    <td style="color: var(--danger); font-weight: bold;">{{ prod.nome }}</td>
+                    <td>{{ prod.quantidade }}</td>
+                    <td>{{ prod.quantidade_minima }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" style="color: var(--success); font-weight: 600; text-align: center; padding: 20px;">Todos os níveis saudáveis! 🎉</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="coluna">
+        <h2>⏱️ Últimas Atividades</h2>
+        <table>
+            <thead>
+                <tr><th>Produto</th><th>Tipo</th><th>Qtd</th></tr>
+            </thead>
+            <tbody>
+                {% for mov in ultimas_movimentacoes %}
+                <tr>
+                    <td>{{ mov.produto.nome }}</td>
+                    <td><strong>{{ mov.get_tipo_display }}</strong></td>
+                    <td>{{ mov.quantidade }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Pequeno efeito reflexivo nos cards ao passar o mouse
+    document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            card.style.setProperty('--mouse-x', `${x}px`);
+            card.style.setProperty('--mouse-y', `${y}px`);
+        });
+    });
+</script>
+</body>
+</html>

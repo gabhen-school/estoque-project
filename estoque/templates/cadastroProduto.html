@@ -4,40 +4,69 @@
     <meta charset="UTF-8">
     <title>Cadastrar Produto</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 30px; background: #f8f8f8; }
-        .card { background: white; padding: 24px 32px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); max-width: 500px; }
-        h2 { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 4px; font-weight: bold; }
-        input, textarea { width: 100%; padding: 8px; box-sizing: border-box; margin-bottom: 14px; border: 1px solid #ccc; border-radius: 4px; }
-        .botoes { display: flex; gap: 10px; }
-        button { padding: 9px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
-        button:hover { background: #1e7e34; }
-        a.voltar { padding: 9px 20px; background: #6c757d; color: white; border-radius: 4px; text-decoration: none; font-size: 14px; }
-        a.voltar:hover { background: #545b62; }
+        :root {
+            --bg-primary: #f3f4f6;
+            --surface: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --primary: #28a745;
+            --primary-hover: #1e7e34;
+            --focus-ring: rgba(40, 167, 69, 0.2);
+        }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; min-height: 100vh; background: var(--bg-primary); display: flex; justify-content: center; align-items: center; padding: 24px; box-sizing: border-box; }
+        .card { background: var(--surface); padding: 32px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05); max-width: 540px; width: 100%; box-sizing: border-box; transform: scale(0.95); opacity: 0; animation: popIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        h2 { margin: 0 0 24px 0; color: var(--text-main); font-size: 24px; font-weight: 700; text-align: center; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-muted); font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 11px 14px; box-sizing: border-box; margin-bottom: 18px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; color: var(--text-main); outline: none; transition: all 0.2s ease; background: #ffffff; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--focus-ring); transform: translateY(-1px); }
+        input:hover, select:hover, textarea:hover { border-color: #a3a3a3; }
+        .botoes { display: flex; gap: 12px; margin-top: 8px; }
+        button { flex: 1; padding: 12px 24px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s ease; }
+        button:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2); }
+        button:active { transform: translateY(0); }
+        a.voltar { flex: 1; padding: 12px 24px; background: #6c757d; color: white; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600; text-align: center; box-sizing: border-box; transition: all 0.2s ease; }
+        a.voltar:hover { background: #545b62; transform: translateY(-1px); }
+        @keyframes popIn { to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
 <div class="card">
-    <h2>+ Cadastrar Produto</h2>
+    <h2>📦 Cadastrar Novo Produto</h2>
     <form method="POST" action="/estoque/cadastrar">
         {% csrf_token %}
-        <label>Nome</label>
-        <input type="text" name="nome" required>
+        <label>Nome do Produto *</label>
+        <input type="text" name="nome" placeholder="Ex: Monitor UltraWide 29" required>
+
+        <label>Categoria</label>
+        <select name="categoria">
+            <option value="">Nenhuma Categoria</option>
+            {% for cat in categorias %}
+                <option value="{{ cat.id }}">{{ cat.nome }}</option>
+            {% endfor %}
+        </select>
 
         <label>Descrição</label>
-        <input type="text" name="descricao">
+        <textarea name="descricao" rows="2" placeholder="Breve resumo ou especificações do item..."></textarea>
 
-        <label>Quantidade Inicial</label>
-        <input type="number" name="quantidade" value="0" min="0">
-
-        <label>Quantidade Mínima (alerta de estoque baixo)</label>
-        <input type="number" name="quantidade_minima" value="0" min="0">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div>
+                <label>Quantidade Inicial</label>
+                <input type="number" name="quantidade" value="0" min="0">
+            </div>
+            <div>
+                <label>Quantidade Mínima</label>
+                <input type="number" name="quantidade_minima" value="0" min="0">
+            </div>
+        </div>
 
         <label>Preço Unitário (R$)</label>
-        <input type="number" name="preco_unitario" value="0.00" step="0.01" min="0">
+        <input type="number" name="preco_unitario" step="0.01" value="0.00" min="0">
+
+        <label>Localização no Depósito</label>
+        <input type="text" name="localizacao_deposito" placeholder="Ex: Corredor A, Prateleira 4">
 
         <div class="botoes">
-            <button type="submit">Salvar</button>
+            <button type="submit">Salvar Registo</button>
             <a href="/estoque/listar" class="voltar">Cancelar</a>
         </div>
     </form>

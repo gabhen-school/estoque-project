@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerir Categorias</title>
+    <style>
+        :root {
+            --bg-primary: #f3f4f6;
+            --surface: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --primary: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 24px; background: var(--bg-primary); color: var(--text-main); }
+        .topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; background: var(--surface); padding: 16px 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        h1 { font-size: 24px; margin: 0 0 8px 0; }
+        .nav a { margin-right: 16px; text-decoration: none; color: var(--text-muted); font-weight: 600; font-size: 14px; transition: color 0.2s; }
+        .nav a:hover { color: var(--primary); }
+        
+        .layout-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; animation: fadeInUp 0.4s ease; }
+        .card-form { background: var(--surface); padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); height: fit-content; }
+        .card-form h3 { margin-top: 0; margin-bottom: 16px; }
+        
+        label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-muted); font-size: 14px; }
+        input { width: 100%; padding: 10px 14px; box-sizing: border-box; margin-bottom: 18px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; transition: all 0.2s; }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+        
+        .btn { padding: 10px 16px; color: white; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; width: 100%; text-align: center; box-sizing: border-box; display: block; }
+        .btn-success { background: var(--success); }
+        .btn-success:hover { background: #059669; }
+        .btn-danger { background: var(--danger); padding: 6px 12px; width: auto; display: inline-block; }
+        .btn-danger:hover { background: #b91c1c; }
+        
+        .table-container { background: var(--surface); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: #1f2937; color: #ffffff; padding: 14px 16px; font-size: 13px; font-weight: 600; text-transform: uppercase; }
+        td { padding: 14px 16px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+        tr:hover td { background-color: #f9fafb; }
+        
+        .logout { color: var(--danger); text-decoration: none; font-weight: 600; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="topo">
+    <div>
+        <h1>🗂️ Gerir Categorias do Estoque</h1>
+        <div class="nav">
+            <a href="/estoque/dashboard">Dashboard</a>
+            <a href="/estoque/listar">Produtos</a>
+            <a href="/estoque/categorias" style="color: var(--primary);">Categorias</a>
+            <a href="/estoque/movimentacoes">Movimentações</a>
+        </div>
+    </div>
+    <div>
+        <span>Olá, <strong>{{ request.user.username }}</strong> &nbsp;|&nbsp;</span>
+        <a href="/logout" class="logout">Sair</a>
+    </div>
+</div>
+
+<div class="layout-grid">
+    <div class="card-form">
+        <h3>Nova Categoria</h3>
+        <form method="POST" action="/estoque/categorias">
+            {% csrf_token %}
+            <label>Nome da Categoria</label>
+            <input type="text" name="nome" placeholder="Ex: Informática, Papelaria..." required>
+            <button type="submit" class="btn btn-success">Adicionar Categoria</button>
+        </form>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome da Categoria</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in categorias %}
+                <tr>
+                    <td>#{{ cat.id }}</td>
+                    <td><strong>{{ cat.nome }}</strong></td>
+                    <td>
+                        <a href="/estoque/categorias/excluir/{{ cat.id }}" class="btn btn-danger" onclick="return confirm('Eliminar esta categoria? Os produtos vinculados perderão a categoria.')">Eliminar</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" style="text-align:center; color: var(--text-muted); padding: 30px;">Nenhuma categoria adicionada até ao momento.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

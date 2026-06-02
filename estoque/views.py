@@ -1,9 +1,13 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
-from .models import Produto, MovimentacaoEstoque
+from django.db.models import Sum, F, DecimalField
+from .models import Produto, MovimentacaoEstoque, Categoria
 
+from rest_framework import viewsets
+from .serializers import ProdutoSerializer, MovimentacaoEstoqueSerializer, CategoriaSerializer
+from rest_framework.permissions import IsAuthenticated
 
 # ───────────────────────────── AUTH ──────────────────────────────
 
@@ -34,8 +38,26 @@ def logout_view(request):
 
 @login_required
 def listar_produtos(request):
-    produtos = Produto.objects.all()
-    return render(request, 'listarProdutos.html', {'produtos': produtos})
+    produtos = Produto.objects.select_related('categoria').all()
+    categorias = Categoria.objects.all()
+
+    # 🔍 NOVO: Filtro de Busca por Nome ou Descrição
+    termo_busca = request.GET.get('busca')
+    if termo_busca:
+        # Busca produtos que contenham o termo no nome OU na descrição (ignore maiúsculas/minúsculas)
+        produtos = produtos.filter(nome__icontains=termo_busca) | produtos.filter(descricao__icontains=termo_busca)
+
+    # Filtros de categoria já existentes
+    categoria_id = request.GET.get('categoria')
+    if categoria_id:
+        produtos = produtos.filter(categoria_id=categoria_id)
+
+    # Passamos também o 'termo_busca' para o HTML para manter o texto na caixinha após pesquisar
+    return render(request, 'listarProdutos.html', {
+        'produtos': produtos, 
+        'categorias': categorias,
+        'termo_busca': termo_busca
+    })
 
 
 @login_required
@@ -46,6 +68,8 @@ def cadastrar_produto(request):
         quantidade = int(request.POST.get('quantidade', 0))
         quantidade_minima = int(request.POST.get('quantidade_minima', 0))
         preco_unitario = request.POST.get('preco_unitario', '0')
+        categoria_id = request.POST.get('categoria')  
+        localizacao = request.POST.get('localizacao_deposito')  
 
         produto = Produto(
             nome=nome,
@@ -53,41 +77,56 @@ def cadastrar_produto(request):
             quantidade=quantidade,
             quantidade_minima=quantidade_minima,
             preco_unitario=preco_unitario,
+            localizacao_deposito=localizacao,  
         )
+        if categoria_id:  
+            produto.categoria_id = int(categoria_id)
+            
         produto.save()
 
-        # Registra movimentação inicial se houver quantidade
         if quantidade > 0:
             MovimentacaoEstoque.objects.create(
                 produto=produto,
                 tipo='ENTRADA',
                 quantidade=quantidade,
-                observacao='Cadastro inicial do produto'
+                observacao='Cadastro inicial do produto',
+                usuario=request.user  # <-- ATUALIZADO: Grava o utilizador do RH/Funcionário
             )
-
         return HttpResponseRedirect('/estoque/listar')
 
-    return render(request, 'cadastroProduto.html')
+    categorias = Categoria.objects.all()
+    return render(request, 'cadastroProduto.html', {'categorias': categorias})
 
 
 @login_required
 def editar_produto(request, id):
-    produto = Produto.objects.get(id=id)
+    produto = get_object_or_404(Produto, id=id)
 
     if request.method == 'POST':
         produto.nome = request.POST.get('nome')
         produto.descricao = request.POST.get('descricao')
         produto.quantidade_minima = int(request.POST.get('quantidade_minima', 0))
-        produto.preco_unitario = request.POST.get('preco_unitario', '0')
-        produto.save()
+        produto.localizacao_deposito = request.POST.get('localizacao_deposito')
+        
+        preco_informado = request.POST.get('preco_unitario')
+        produto.preco_unitario = preco_informado if preco_informado and preco_informado.strip() != '' else '0'
+        
+        categoria_id = request.POST.get('categoria')
+        if categoria_id:
+            produto.categoria_id = int(categoria_id)
+        else:
+            produto.categoria = None
+            
+        produto.save() 
         return HttpResponseRedirect('/estoque/listar')
 
-    return render(request, 'editarProduto.html', {'produto': produto})
+    categorias = Categoria.objects.all()
+    return render(request, 'editarProduto.html', {'produto': produto, 'categorias': categorias})
 
 
 @login_required
 def excluir_produto(request, id):
-    produto = Produto.objects.get(id=id)
+    produto = get_object_or_404(Produto, id=id)
     produto.delete()
     return HttpResponseRedirect('/estoque/listar')
 
@@ -102,7 +141,7 @@ def listar_movimentacoes(request):
 
 @login_required
 def registrar_movimentacao(request, id):
-    produto = Produto.objects.get(id=id)
+    produto = get_object_or_404(Produto, id=id)
     erro = None
 
     if request.method == 'POST':
@@ -120,7 +159,7 @@ def registrar_movimentacao(request, id):
             elif tipo == 'SAIDA':
                 produto.quantidade -= quantidade
             elif tipo == 'AJUSTE':
-                produto.quantidade = quantidade
+                produto.quantidade = quantity = quantidade
 
             produto.save()
 
@@ -128,9 +167,78 @@ def registrar_movimentacao(request, id):
                 produto=produto,
                 tipo=tipo,
                 quantidade=quantidade,
-                observacao=observacao
+                observacao=observacao,
+                usuario=request.user  # <-- ATUALIZADO: Grava o utilizador do RH/Funcionário
             )
 
             return HttpResponseRedirect('/estoque/listar')
 
     return render(request, 'movimentacao.html', {'produto': produto, 'erro': erro})
+
+
+# ==================== VIEWS TRADICIONAIS (HTML) ====================
+
+@login_required
+def dashboard(request):
+    total_produtos = Produto.objects.count()
+    total_itens_fisicos = Produto.objects.aggregate(Sum('quantidade'))['quantidade__sum'] or 0
+    
+    produtos_baixo_estoque = [p for p in Produto.objects.all() if p.estoque_baixo]
+    total_alertas = len(produtos_baixo_estoque)
+
+    valor_total_estoque = Produto.objects.annotate(
+        total_item=F('quantidade') * F('preco_unitario')
+    ).aggregate(total=Sum('total_item', output_field=DecimalField()))['total'] or 0.00
+
+    ultimas_movimentacoes = MovimentacaoEstoque.objects.select_related('produto').order_by('-data')[:5]
+
+    context = {
+        'total_produtos': total_produtos,
+        'total_itens_fisicos': total_itens_fisicos,
+        'total_alertas': total_alertas,
+        'valor_total_estoque': valor_total_estoque,
+        'ultimas_movimentacoes': ultimas_movimentacoes,
+        'produtos_baixo_estoque': produtos_baixo_estoque,
+    }
+    return render(request, 'dashboard.html', context)
+
+
+@login_required
+def historico_produto(request, produto_id):
+    produto = get_object_or_404(Produto, id=produto_id)
+    movimentacoes = MovimentacaoEstoque.objects.filter(produto=produto).order_by('-data')
+    return render(request, 'historicoProduto.html', {'produto': produto, 'movimentacoes': movimentacoes})
+
+
+@login_required
+def gerenciar_categorias(request):
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+        if nome:
+            Categoria.objects.create(nome=nome)
+        return redirect('/estoque/categorias')
+        
+    categorias = Categoria.objects.all()
+    return render(request, 'gerenciarCategorias.html', {'categorias': categorias})
+
+
+@login_required
+def excluir_categoria(request, id):
+    categoria = get_object_or_404(Categoria, id=id)
+    categoria.delete()
+    return redirect('/estoque/categorias')
+
+
+# ==================== ENDPOINTS DA API (DRF) ====================
+
+class ProdutoViewSet(viewsets.ModelViewSet):
+    queryset = Produto.objects.all()
+    serializer_class = ProdutoSerializer
+
+class MovimentacaoEstoqueViewSet(viewsets.ModelViewSet):
+    queryset = MovimentacaoEstoque.objects.all()
+    serializer_class = MovimentacaoEstoqueSerializer
+
+class CategoriaViewSet(viewsets.ModelViewSet):
+    queryset = Categoria.objects.all()
+    serializer_class = CategoriaSerializer
