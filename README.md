@@ -141,3 +141,8 @@ Para conectar com os outros grupos, os campos-chave serão:
 
 Quando houver integração, esses módulos poderão importar os models diretamente
 (se estiverem no mesmo projeto Django) ou via API REST.
+
+
+rm -rf venv
+chmod +x iniciar.sh
+./iniciar.sh
