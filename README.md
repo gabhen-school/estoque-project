@@ -10,19 +10,20 @@ Segue o padrão MVT do Django (views com funções, templates HTML, SQLite).
 ```
 estoque-project/
 ├── manage.py
-├── db.sqlite3                  (gerado após migrate)
-├── iniciar.sh                  (script de inicialização — Linux/Mac)
-├── iniciar.bat                 (script de inicialização — Windows)
-├── seed_dados.py               (popula o banco com dados fictícios)
-├── estoque_project/            (configurações do projeto)
+├── requirements.txt              (dependências do projeto)
+├── db.sqlite3                    (gerado após migrate)
+├── iniciar.sh                    (script de inicialização — Linux/Mac)
+├── iniciar.bat                   (script de inicialização — Windows)
+├── seed_dados.py                 (popula o banco com dados fictícios)
+├── estoque_project/              (configurações do projeto)
 │   ├── settings.py
-│   ├── urls.py                 → rotas do projeto + registro das APIs
+│   ├── urls.py                   → rotas do projeto + registro das APIs
 │   └── wsgi.py
-└── estoque/                    (app principal)
-    ├── models.py               → Categoria, Produto, MovimentacaoEstoque
-    ├── views.py                → login, logout, CRUD, dashboard, APIs REST
-    ├── serializers.py          → serialização dos models para a API
-    ├── urls.py                 → rotas internas do app
+└── estoque/                      (app principal)
+    ├── models.py                 → Categoria, Produto, MovimentacaoEstoque
+    ├── views.py                  → login, logout, CRUD, dashboard, APIs REST
+    ├── serializers.py            → serialização dos models para a API
+    ├── urls.py                   → rotas internas do app
     ├── admin.py
     ├── apps.py
     ├── migrations/
@@ -40,11 +41,104 @@ estoque-project/
 
 ---
 
-## Como Rodar
+## Guia de Comandos Essenciais
+
+### 1. Criar ambiente virtual
+
+```bash
+python3 -m venv venv
+```
+
+### 2. Ativar ambiente virtual
+
+**Linux/Mac:**
+```bash
+source venv/bin/activate
+```
+
+**Windows:**
+```powershell
+.\venv\Scripts\activate
+```
+
+### 3. Instalar dependências
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3.1. Verificar a instalação dos pacotes
+
+```bash
+pip freeze
+```
+
+### 4. Criar projeto (referência — já criado)
+
+```bash
+django-admin startproject nome_do_projeto
+```
+
+### 5. Rodar o servidor
+
+```bash
+python3 manage.py runserver
+```
+
+### 6. Mudar a porta do servidor
+
+```bash
+python3 manage.py runserver 8080
+```
+
+### 7. Criar aplicação (app)
+
+```bash
+python3 manage.py startapp nome_do_app
+```
+
+### 8. Criar tabelas / aplicar alterações no banco de dados
+
+```bash
+python3 manage.py migrate
+```
+
+### 9. Gerar migrações ao alterar models
+
+```bash
+python3 manage.py makemigrations nome_do_app
+```
+
+### 10. Verificar problemas no projeto
+
+```bash
+python3 manage.py check
+```
+
+### 11. Shell interativo do Python/Django
+
+```bash
+python3 manage.py shell
+```
+
+### 12. Criar usuário administrador
+
+```bash
+python3 manage.py createsuperuser
+```
+
+### 13. Instalar DB Browser para SQLite (Linux)
+
+```bash
+sudo apt-get update
+sudo apt-get install sqlitebrowser
+```
+
+---
+
+## Como Rodar (Passo a Passo Rápido)
 
 ### Opção 1 — Script automático (recomendado)
-
-Coloque `iniciar.sh` (Linux/Mac) ou `iniciar.bat` (Windows) dentro da pasta `estoque-project/` e execute:
 
 ```bash
 # Linux/Mac
@@ -59,54 +153,75 @@ O script faz tudo automaticamente: cria o venv, instala dependências, roda as m
 
 > Se o venv estiver corrompido (erro de "arquivo não encontrado"), apague-o antes: `rm -rf venv`
 
----
-
 ### Opção 2 — Manual
 
-#### 1. Pré-requisito
-Python 3.10+ instalado.
-
-#### 2. Criar ambiente virtual
 ```bash
-cd estoque-project
+# 1. Criar e ativar o venv
 python3 -m venv venv
+source venv/bin/activate        # Linux/Mac
+# .\venv\Scripts\activate       # Windows
+
+# 2. Instalar dependências
+pip install -r requirements.txt
+
+# 3. Rodar migrations
+python3 manage.py makemigrations
+python3 manage.py migrate
+
+# 4. Criar usuário admin
+python3 manage.py createsuperuser
+
+# 5. (Opcional) Popular banco com dados fictícios
+python3 manage.py shell < seed_dados.py
+
+# 6. Rodar o servidor
+python3 manage.py runserver
 ```
 
-#### 3. Instalar dependências
-```bash
-# Linux/Mac — use o pip do venv diretamente (evita conflito com o Python do sistema)
-venv/bin/pip install django djangorestframework
+Acesse: `http://127.0.0.1:8000/`
 
-# Windows
-venv\Scripts\pip install django djangorestframework
+---
+
+## Deploy no PythonAnywhere
+
+O projeto está configurado para funcionar no **PythonAnywhere**. Após o deploy, a base URL de todas as APIs muda para:
+
 ```
-
-#### 4. Rodar as migrations
-```bash
-venv/bin/python manage.py makemigrations
-venv/bin/python manage.py migrate
+https://<seu-usuario>.pythonanywhere.com/
 ```
 
-#### 5. Criar usuário admin
-```bash
-venv/bin/python manage.py createsuperuser
+### Configuração necessária no `settings.py`
+
+```python
+ALLOWED_HOSTS = ['<seu-usuario>.pythonanywhere.com']
+
+# Configuração de arquivos estáticos para produção
+STATIC_URL = '/static/'
+STATIC_ROOT = '/home/<seu-usuario>/estoque-project/static'
 ```
 
-#### 6. (Opcional) Popular banco com dados fictícios
-```bash
-venv/bin/python manage.py shell < seed_dados.py
-```
-Cria 8 categorias, 35 produtos e 36 movimentações de exemplo.
+### Passos para deploy
 
-#### 7. Rodar o servidor
-```bash
-venv/bin/python manage.py runserver
-```
-
-#### 8. Acessar no navegador
-```
-http://127.0.0.1:8000/
-```
+1. Suba o código para o PythonAnywhere (via Git ou upload)
+2. Crie um virtualenv no console do PythonAnywhere:
+   ```bash
+   mkvirtualenv --python=/usr/bin/python3.10 venv
+   pip install -r requirements.txt
+   ```
+3. Configure o Web App apontando para o `wsgi.py`:
+   - **Source code:** `/home/<seu-usuario>/estoque-project`
+   - **Virtualenv:** `/home/<seu-usuario>/.virtualenvs/venv`
+   - **WSGI file:** aponte para `estoque_project.wsgi`
+4. Rode as migrations:
+   ```bash
+   python manage.py migrate
+   python manage.py createsuperuser
+   ```
+5. Colete os arquivos estáticos:
+   ```bash
+   python manage.py collectstatic
+   ```
+6. Recarregue o Web App no painel do PythonAnywhere
 
 ---
 
@@ -187,7 +302,9 @@ Histórico por produto em `/estoque/produto/<id>/historico`.
 ## API REST
 
 O módulo expõe endpoints REST para comunicação com os outros módulos do sistema.
-Base URL: `http://<host>:8000/api/`
+
+**Base URL (local):** `http://127.0.0.1:8000/api/`
+**Base URL (PythonAnywhere):** `https://<seu-usuario>.pythonanywhere.com/api/`
 
 ### CRUD automático (Django REST Framework)
 
@@ -353,6 +470,36 @@ Retorna o histórico completo de movimentações de um produto, incluindo quem r
   "quantidade_atual": 58,
   "movimentacoes": [ ... ]
 }
+```
+
+---
+
+## Exemplos de consumo da API (PythonAnywhere)
+
+Substituir `<seu-usuario>` pelo nome de usuário no PythonAnywhere.
+
+### Listar todos os produtos
+```bash
+curl https://<seu-usuario>.pythonanywhere.com/api/produtos/
+```
+
+### Consultar estoque disponível
+```bash
+curl https://<seu-usuario>.pythonanywhere.com/api/estoque-disponivel/3/
+```
+
+### Registrar entrada de compra
+```bash
+curl -X POST https://<seu-usuario>.pythonanywhere.com/api/entrada-compra/ \
+     -H "Content-Type: application/json" \
+     -d '{"produto_id": 3, "quantidade": 10, "observacao": "NF-001", "fornecedor_id": 7}'
+```
+
+### Registrar saída de venda
+```bash
+curl -X POST https://<seu-usuario>.pythonanywhere.com/api/saida-venda/ \
+     -H "Content-Type: application/json" \
+     -d '{"produto_id": 3, "quantidade": 2, "observacao": "Pedido #99", "cliente_id": 5}'
 ```
 
 ---
