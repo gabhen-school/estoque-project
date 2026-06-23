@@ -45,6 +45,14 @@
             {% endfor %}
         </select>
 
+        <label>Fornecedor (Integração Externa)</label>
+        <select name="fornecedor_id">
+            <option value="">Nenhum Fornecedor</option>
+            {% for forn in fornecedores %}
+                <option value="{{ forn.id }}" {% if produto.fornecedor_id|stringformat:"s" == forn.id|stringformat:"s" %}selected{% endif %}>{{ forn.nome_empresa }}</option>
+            {% endfor %}
+        </select>
+
         <label>Descrição</label>
         <textarea name="descricao" rows="2">{{ produto.descricao|default:'' }}</textarea>
 

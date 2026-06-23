@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -6,7 +7,7 @@ SECRET_KEY = 'django-insecure-estoque-dos-chave-secreta-12345'
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -15,13 +16,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'estoque',
-    'rest_framework'
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -67,9 +70,19 @@ TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Redirecionamentos de login
 LOGIN_URL = '/login'
 LOGIN_REDIRECT_URL = '/estoque/listar'
 LOGOUT_REDIRECT_URL = '/login'
+
+# ── CORS — permite que outros módulos consumam a API ─────────
+CORS_ALLOW_ALL_ORIGINS = True
+
+# ── URLs dos módulos externos (PythonAnywhere) ──────────────────
+MODULOS_EXTERNOS = {
+    'FORNECEDORES': 'https://wanderson020.pythonanywhere.com',
+    'COMPRAS':      'https://henrikie.pythonanywhere.com',
+}

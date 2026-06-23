@@ -69,8 +69,8 @@ echo ""
 echo "[4/6] Instalando dependências..."
 
 $VENV_PIP install --upgrade pip
-$VENV_PIP install django djangorestframework
-echo "    Django e dependências instalados."
+$VENV_PIP install -r requirements.txt
+echo "    Dependências instaladas."
 
 # ── 5. Migrations e banco de dados ───────────────────────
 echo ""

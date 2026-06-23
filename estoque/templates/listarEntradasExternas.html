@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Entradas Externas (Compras)</title>
+    <style>
+        :root {
+            --bg-primary: #f3f4f6;
+            --surface: #ffffff;
+            --text-main: #1f2937;
+            --primary: #3b82f6;
+        }
+        body { font-family: sans-serif; margin: 0; padding: 24px; background: var(--bg-primary); }
+        .card { background: var(--surface); padding: 24px; border-radius: 12px; max-width: 900px; margin: 0 auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+        th { background: #f9fafb; font-weight: bold; }
+        a.voltar { display: inline-block; margin-bottom: 16px; color: var(--primary); text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <a href="/estoque/listar" class="voltar">← Voltar para Produtos</a>
+    <h2>📦 Entradas Externas (API do Módulo de Compras)</h2>
+    <p>Esta tela consome dados da API externa: <strong>https://henrikie.pythonanywhere.com/tarefas/api/entradas/</strong></p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID Entrada</th>
+                <th>Produto</th>
+                <th>Fornecedor</th>
+                <th>Qtd</th>
+                <th>Custo Unit.</th>
+                <th>Total</th>
+                <th>Data</th>
+                <th>NFE</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entrada in entradas %}
+            <tr>
+                <td>#{{ entrada.id }}</td>
+                <td>{{ entrada.produto_detalhes.nome|default:"-" }}</td>
+                <td>{{ entrada.fornecedor_detalhes.nome_fantasia|default:"-" }}</td>
+                <td>{{ entrada.quantidade }}</td>
+                <td>R$ {{ entrada.preco_custo_unitario }}</td>
+                <td>R$ {{ entrada.valor_total }}</td>
+                <td>{{ entrada.data_entrada }}</td>
+                <td>{{ entrada.nfe }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" style="text-align: center;">Nenhuma entrada encontrada ou erro de conexão.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

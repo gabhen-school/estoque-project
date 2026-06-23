@@ -78,8 +78,8 @@ echo.
 echo [4/6] Instalando dependências...
 
 pip install --quiet --upgrade pip
-pip install --quiet django djangorestframework
-echo     Django e dependências instalados.
+pip install --quiet -r requirements.txt
+echo     Dependências instaladas.
 
 :: ── 5. Migrations e banco de dados ───────────────────────
 echo.

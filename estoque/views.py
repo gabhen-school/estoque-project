@@ -11,6 +11,7 @@ from rest_framework.response import Response
 
 from .models import Produto, MovimentacaoEstoque, Categoria
 from .serializers import ProdutoSerializer, MovimentacaoEstoqueSerializer, CategoriaSerializer
+from .integracao import listar_fornecedores, obter_mapa_fornecedores, listar_entradas_compras
 
 
 # ───────────────────────────── AUTH ──────────────────────────────
@@ -53,6 +54,14 @@ def listar_produtos(request):
     if categoria_id:
         produtos = produtos.filter(categoria_id=categoria_id)
 
+    # ── INTEGRAÇÃO FORNECEDORES: Adiciona o nome do fornecedor aos produtos
+    mapa_fornecedores = obter_mapa_fornecedores()
+    for produto in produtos:
+        if produto.fornecedor_id:
+            produto.nome_fornecedor = mapa_fornecedores.get(produto.fornecedor_id, f"Fornecedor ID {produto.fornecedor_id}")
+        else:
+            produto.nome_fornecedor = "—"
+
     return render(request, 'listarProdutos.html', {
         'produtos': produtos,
         'categorias': categorias,
@@ -82,6 +91,10 @@ def cadastrar_produto(request):
         if categoria_id:
             produto.categoria_id = int(categoria_id)
 
+        fornecedor_id = request.POST.get('fornecedor_id')
+        if fornecedor_id:
+            produto.fornecedor_id = int(fornecedor_id)
+
         produto.save()
 
         if quantidade > 0:
@@ -95,7 +108,9 @@ def cadastrar_produto(request):
         return HttpResponseRedirect('/estoque/listar')
 
     categorias = Categoria.objects.all()
-    return render(request, 'cadastroProduto.html', {'categorias': categorias})
+    # ── INTEGRAÇÃO FORNECEDORES: Busca lista de fornecedores para o dropdown
+    fornecedores = listar_fornecedores()
+    return render(request, 'cadastroProduto.html', {'categorias': categorias, 'fornecedores': fornecedores})
 
 
 @login_required
@@ -117,11 +132,19 @@ def editar_produto(request, id):
         else:
             produto.categoria = None
 
+        fornecedor_id = request.POST.get('fornecedor_id')
+        if fornecedor_id:
+            produto.fornecedor_id = int(fornecedor_id)
+        else:
+            produto.fornecedor_id = None
+
         produto.save()
         return HttpResponseRedirect('/estoque/listar')
 
     categorias = Categoria.objects.all()
-    return render(request, 'editarProduto.html', {'produto': produto, 'categorias': categorias})
+    # ── INTEGRAÇÃO FORNECEDORES: Busca lista de fornecedores para o dropdown
+    fornecedores = listar_fornecedores()
+    return render(request, 'editarProduto.html', {'produto': produto, 'categorias': categorias, 'fornecedores': fornecedores})
 
 
 @login_required
@@ -137,6 +160,15 @@ def excluir_produto(request, id):
 def listar_movimentacoes(request):
     movimentacoes = MovimentacaoEstoque.objects.all().order_by('-data')
     return render(request, 'listarMovimentacoes.html', {'movimentacoes': movimentacoes})
+
+@login_required
+def listar_entradas_externas(request):
+    """
+    Integração com Módulo de Compras (Henrikie).
+    Busca as entradas cadastradas lá para o usuário visualizar.
+    """
+    entradas = listar_entradas_compras()
+    return render(request, 'listarEntradasExternas.html', {'entradas': entradas})
 
 
 @login_required
