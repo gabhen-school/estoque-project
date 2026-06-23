@@ -49,5 +49,14 @@ def obter_mapa_fornecedores():
 
 def listar_entradas_compras():
     """Busca a lista de entradas registradas no Módulo de Compras (Tarefas/Entradas)"""
-    return _fazer_get('COMPRAS', '/tarefas/api/entradas/') or []
+    dados = _fazer_get('COMPRAS', '/tarefas/api/entradas/')
+    
+    if not dados:
+        return []
+        
+    # Se a API retornar paginação (com 'results'), extrai a lista. Senão, assume que já é a lista.
+    if isinstance(dados, dict) and 'results' in dados:
+        return dados['results']
+    
+    return dados if isinstance(dados, list) else []
 
